@@ -25,7 +25,7 @@ type Account struct {
 	Email     string           `gorm:"type:varchar(255);unique;not null" validate:"required,email,max=255"`
 	Phone     string           `gorm:"type:varchar(255);unique;not null" validate:"required,max=255"`
 	Info      string           `gorm:"type:varchar(255)" validate:"max=255"`
-	Vip       VipClass         `gorm:"type:vip_status;default:'nm'" validate:"required,oneof=nm vp 2vp 3vp b"`
+	Vip       VipClass         `gorm:"type:vip_status;default:'nm'" validate:"oneof=nm vp 2vp 3vp b"`
 	Password  string           `gorm:"type:varchar(255);not null" validate:"required,min=6,max=255"`
 	RoleId    uuid.UUID        `gorm:"type:uuid;not null" validate:"required,uuid"`
 	Role      *Role            `gorm:"foreignKey:RoleId;references:ID"`
