@@ -40,6 +40,7 @@ func (s *AccountService) UpdateAccount(id string, updatedAccount *models.Account
 		return err
 	}
 	account.Name = updatedAccount.Name
+	account.Birthday = updatedAccount.Birthday
 	account.Info = updatedAccount.Info
 	account.Vip = updatedAccount.Vip
 	account.Password = updatedAccount.Password

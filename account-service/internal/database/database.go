@@ -26,13 +26,13 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 
 	// Enum Vip account
 	if err := db.Exec(`DO $$ BEGIN
-	CREATE TYPE vip_class AS ENUM ('nm','vp','2vp','3vp','b');
+	CREATE TYPE vip_status AS ENUM ('nm','vp','2vp','3vp','b');
 	EXCEPTION WHEN duplicate_object THEN NULL;
 	END $$;`).Error; err != nil {
 		return nil, fmt.Errorf("failed to create vip_status enum: %v", err)
 	}
 	// Auto migrate
-	if err := db.AutoMigrate(&models.Account{}, &models.Role{}); err != nil {
+	if err := db.AutoMigrate(&models.Role{}, &models.Account{}); err != nil {
 		return nil, fmt.Errorf("migrate failed : %v", err)
 	}
 	return db, nil

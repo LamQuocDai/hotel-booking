@@ -12,7 +12,7 @@ type Role struct {
 	Name        string         `gorm:"type:varchar(255);not null;unique" validate:"required,max=255"`
 	Description string         `gorm:"type:varchar(255)" validate:"max=255"`
 	Accounts    []Account      `gorm:"foreignKey:RoleId"`
-	CreatedAt   time.Time      `gorm:"type:timestamp:default:now()"`
+	CreatedAt   time.Time      `gorm:"type:timestamp;default:now()"`
 	DeletedAt   gorm.DeletedAt `gorm:"type:timestamp;index"`
 }
 
