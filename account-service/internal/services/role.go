@@ -16,7 +16,7 @@ func NewRoleService(db *gorm.DB) *RoleService {
 
 func (s *RoleService) GetAllRoles() ([]models.Role, error) {
 	var roles []models.Role
-	if err := s.db.Find(&roles).Error; err != nil {
+	if err := s.db.Preload("Accounts").Find(&roles).Error; err != nil {
 		return nil, err
 	}
 	return roles, nil
@@ -24,7 +24,7 @@ func (s *RoleService) GetAllRoles() ([]models.Role, error) {
 
 func (s *RoleService) GetRoleByID(id string) (*models.Role, error) {
 	var role models.Role
-	if err := s.db.Where("id = ?", id).First(&role).Error; err != nil {
+	if err := s.db.Preload("Accounts").Where("id = ?", id).First(&role).Error; err != nil {
 		return nil, err
 	}
 	return &role, nil
@@ -34,13 +34,13 @@ func (s *RoleService) CreateRole(role *models.Role) error {
 	return s.db.Create(role).Error
 }
 
-func (s *RoleService) UpdateRole(id string, updateRole *models.Role) error {
+func (s *RoleService) UpdatedRole(id string, updatedRole *models.Role) error {
 	var role models.Role
 	if err := s.db.Where("id = ?", id).First(&role).Error; err != nil {
 		return err
 	}
-	role.Name = updateRole.Name
-	role.Description = updateRole.Description
+	role.Name = updatedRole.Name
+	role.Description = updatedRole.Description
 	return s.db.Save(&role).Error
 }
 

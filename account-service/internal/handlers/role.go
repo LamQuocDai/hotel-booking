@@ -54,7 +54,7 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 	c.JSON(http.StatusCreated, role)
 }
 
-func (h *RoleHandler) UpdateRole(c *gin.Context) {
+func (h *RoleHandler) UpdatedRole(c *gin.Context) {
 	id := c.Param("id")
 	var updatedRole models.Role
 	if err := c.ShouldBindJSON(&updatedRole); err != nil {
@@ -65,7 +65,7 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.roleService.UpdateRole(id, &updatedRole); err != nil {
+	if err := h.roleService.UpdatedRole(id, &updatedRole); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

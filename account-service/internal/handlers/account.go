@@ -54,7 +54,7 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 	c.JSON(http.StatusCreated, account)
 }
 
-func (h *AccountHandler) UpdateAccount(c *gin.Context) {
+func (h *AccountHandler) UpdatedAccount(c *gin.Context) {
 	id := c.Param("id")
 	var updatedAccount models.Account
 	if err := c.ShouldBindJSON(&updatedAccount); err != nil {

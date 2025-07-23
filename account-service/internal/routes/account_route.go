@@ -12,7 +12,7 @@ func SetupAccountRoutes(r *gin.Engine, h *handlers.AccountHandler) {
 		accountGroup.GET("", h.GetAllAccounts)
 		accountGroup.GET("/:id", h.GetAccountByID)
 		accountGroup.POST("", h.CreateAccount)
-		accountGroup.PUT("/:id", h.UpdateAccount)
+		accountGroup.PUT("/:id", h.UpdatedAccount)
 		accountGroup.DELETE("/:id", h.DeleteAccount)
 	}
 }

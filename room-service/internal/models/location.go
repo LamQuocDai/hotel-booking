@@ -9,12 +9,12 @@ import (
 
 type Location struct {
 	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name        string         `gorm:"tyoe:varchar(255);not null;unique" validate:"required"`
+	Name        string         `gorm:"type:varchar(255);not null;unique" validate:"required"`
 	Address     string         `gorm:"type:varchar(255);not null;unique" validate:"required"`
 	Description string         `gorm:"type:varchar(255);not null"`
-	Rooms       []Room         `gorm:"foreignKey:LocationId"`
-	CreatedAt   time.Time      `gorm:"type:timestamp;defautl:now()"`
-	DeletedAt   gorm.DeletedAt `gorm:"timestamp;index"`
+	Rooms       []Room         `gorm:"foreignKey:LocationId;references:ID"`
+	CreatedAt   time.Time      `gorm:"type:timestamp;default:now()"`
+	DeletedAt   gorm.DeletedAt `gorm:"type:timestamp;index"`
 }
 
 func (l *Location) BeforeCreate(tx *gorm.DB) error {

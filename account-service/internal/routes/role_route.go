@@ -12,7 +12,7 @@ func SetupRoleRoutes(r *gin.Engine, h *handlers.RoleHandler) {
 		roleGroup.GET("", h.GetAllRoles)
 		roleGroup.GET("/:id", h.GetRoleByID)
 		roleGroup.POST("", h.CreateRole)
-		roleGroup.PUT("/:id", h.UpdateRole)
+		roleGroup.PUT("/:id", h.UpdatedRole)
 		roleGroup.DELETE("/:id", h.DeleteRole)
 	}
 }
