@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"service-service/internal/models"
+	"payment-service/internal/models"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,15 +10,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type ServiceService struct {
+type PaymentService struct {
 	collection *mongo.Collection
 }
 
-func NewServiceService(db *mongo.Database) *ServiceService {
-	return &ServiceService{collection: db.Collection("services")}
+func NewPaymentService(db *mongo.Database) *PaymentService {
+	return &PaymentService{collection: db.Collection("payments")}
 }
 
-func (s *ServiceService) GetAllServices() ([]models.Service, error) {
+func (s *PaymentService) GetAllPayments() ([]models.Payment, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	cursor, err := s.collection.Find(ctx, bson.M{})
@@ -26,53 +26,53 @@ func (s *ServiceService) GetAllServices() ([]models.Service, error) {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	var services []models.Service
+	var services []models.Payment
 	return services, cursor.All(ctx, &services)
 }
 
-func (s *ServiceService) GetServiceByID(id string) (*models.Service, error) {
+func (s *PaymentService) GetPaymentByID(id string) (*models.Payment, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
 	}
-	var service models.Service
+	var service models.Payment
 	return &service, s.collection.FindOne(ctx, bson.M{"_id": uuid, "deleted_at": nil}).Decode(&service)
 }
 
-func (s *ServiceService) CreateService(service *models.Service) error {
+func (s *PaymentService) CreatePayment(payment *models.Payment) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	service.BeforeCreate()
-	if err := service.IsValid(); err != nil {
+	payment.BeforeCreate()
+	if err := payment.IsValid(); err != nil {
 		return err
 	}
-	_, err := s.collection.InsertOne(ctx, service)
+	_, err := s.collection.InsertOne(ctx, payment)
 	return err
 }
 
-func (s *ServiceService) UpdatedService(id string, updatedService *models.Service) error {
+func (s *PaymentService) UpdatedPayment(id string, updatedPayment *models.Payment) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return err
 	}
-	updatedService.ID = uuid
-	if err := updatedService.IsValid(); err != nil {
+	updatedPayment.ID = uuid
+	if err := updatedPayment.IsValid(); err != nil {
 		return err
 	}
-	_, err = s.collection.UpdateOne(ctx, bson.M{"_id": uuid}, bson.M{"$set": updatedService})
+	_, err = s.collection.UpdateOne(ctx, bson.M{"_id": uuid}, bson.M{"$set": updatedPayment})
 	return err
 }
 
-func (s *ServiceService) DeleteService(id string) error {
+func (s *PaymentService) DeletePayment(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	uuid, err := uuid.Parse(id)
 	if err != nil {
-		return nil
+		return err
 	}
 	now := time.Now()
 	_, err = s.collection.UpdateOne(ctx, bson.M{"_id": uuid}, bson.M{"$set": bson.M{"deleted_at": &now}})
