@@ -14,9 +14,12 @@ func SetupRouter(db *mongo.Database) *gin.Engine {
 	//
 	paymentService := services.NewPaymentService(db)
 	paymentHandler := handlers.NewPaymentHandler(paymentService)
+	promotionService := services.NewPromotionService(db)
+	promotionHandler := handlers.NewPromotionHandler(promotionService)
 
 	//
 	SetupPaymentRoute(r, paymentHandler)
+	SetupPromotionRoute(r, promotionHandler)
 
 	return r
 }
