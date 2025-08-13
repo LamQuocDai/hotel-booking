@@ -22,13 +22,16 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	roomImageHandler := handlers.NewRoomImageHandler(roomImageService)
 	reviewService := services.NewReviewService(db)
 	reviewHandler := handlers.NewReviewHandler(reviewService)
+	roomBookingService := services.NewRoomBookingService(db)
+	roomBookingHandler := handlers.NewRoomBookingHandler(roomBookingService)
 
 	//Register
-	SetupLocationRoute(r, locationHandler)
-	SetupRoomTypeRouter(r, roomTypeHandler)
-	SetupRoomRouter(r, roomHandler)
-	SetupRoomImageRouter(r, roomImageHandler)
-	SetupReviewRouter(r, reviewHandler)
+	SetupLocationRoutes(r, locationHandler)
+	SetupRoomTypeRoutes(r, roomTypeHandler)
+	SetupRoomRoutes(r, roomHandler)
+	SetupRoomImageRoutes(r, roomImageHandler)
+	SetupReviewRoutes(r, reviewHandler)
+	SetupRoomBookingRoutes(r, roomBookingHandler)
 
 	return r
 }

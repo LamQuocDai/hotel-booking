@@ -13,8 +13,12 @@ func SetupRouter(db *mongo.Database) *gin.Engine {
 	//
 	serviceService := services.NewServiceService(db)
 	serviceHandler := handlers.NewServiceHandler(serviceService)
+	serviceBookingService := services.NewServiceBookingService(db)
+	serviceBookingHandler := handlers.NewServiceBookingHandler(serviceBookingService)
 
 	//
 	SetupServiceRoutes(r, serviceHandler)
+	SetupServiceBookingRoutes(r, serviceBookingHandler)
+
 	return r
 }

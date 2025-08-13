@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupPaymentRoute(r *gin.Engine, h *handlers.PaymentHandler) {
+func SetupPaymentRoutes(r *gin.Engine, h *handlers.PaymentHandler) {
 	paymentGroup := r.Group("/payments")
 	{
 		paymentGroup.GET("", h.GetAllPayments)

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoomTypeRouter(r *gin.Engine, h *handlers.RoomTypeHandler) {
+func SetupRoomTypeRoutes(r *gin.Engine, h *handlers.RoomTypeHandler) {
 	RoomTypeGroup := r.Group("/room-types")
 	{
 		RoomTypeGroup.GET("", h.GetAllRoomTypes)

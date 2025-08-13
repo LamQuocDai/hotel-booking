@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupPromotionRoute(r *gin.Engine, h *handlers.PromotionHandler) {
+func SetupPromotionRoutes(r *gin.Engine, h *handlers.PromotionHandler) {
 	promotionGroup := r.Group("/promotions")
 	{
 		promotionGroup.GET("", h.GetAllPromotions)

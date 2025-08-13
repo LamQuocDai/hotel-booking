@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoomImageRouter(r *gin.Engine, h *handlers.RoomImageHandler) {
+func SetupRoomImageRoutes(r *gin.Engine, h *handlers.RoomImageHandler) {
 	RoomImageGroup := r.Group("/room-images")
 	{
 		RoomImageGroup.GET("", h.GetAllRoomImages)

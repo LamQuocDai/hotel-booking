@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupLocationRoute(r *gin.Engine, h *handlers.LocationHandler) {
+func SetupLocationRoutes(r *gin.Engine, h *handlers.LocationHandler) {
 	locationGroup := r.Group("/locations")
 	{
 		locationGroup.GET("", h.GetAllLocations)

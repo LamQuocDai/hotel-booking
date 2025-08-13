@@ -8,12 +8,13 @@ import (
 )
 
 type Service struct {
-	ID          uuid.UUID  `bson:"_id,omitempty" validate:"required,uuid"`
-	Name        string     `bson:"name" validate:"required,max=255"`
-	Description string     `bson:"description" validate:"max=255"`
-	Price       int        `bson:"price" validate:"required,min=0"`
-	CreatedAt   time.Time  `bson:"created_at" validate:"required"`
-	DeletedAt   *time.Time `bson:"deleted_at,omitempty"`
+	ID              uuid.UUID        `bson:"_id,omitempty" validate:"required,uuid"`
+	Name            string           `bson:"name" validate:"required,max=255"`
+	Description     string           `bson:"description" validate:"max=255"`
+	Price           int              `bson:"price" validate:"required,min=0"`
+	ServiceBookings []ServiceBooking `bson:"service_bookings" validate:"dive"`
+	CreatedAt       time.Time        `bson:"created_at" validate:"required"`
+	DeletedAt       *time.Time       `bson:"deleted_at,omitempty"`
 }
 
 func (s *Service) IsValid() error {
