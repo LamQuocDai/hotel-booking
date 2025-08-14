@@ -34,7 +34,7 @@ func (s *AccountService) CreateAccount(account *models.Account) error {
 	return s.db.Create(account).Error
 }
 
-func (s *AccountService) UpdateAccount(id string, updatedAccount *models.Account) error {
+func (s *AccountService) UpdatedAccount(id string, updatedAccount *models.Account) error {
 	var account models.Account
 	if err := s.db.Where("id = ?", id).First(&account).Error; err != nil {
 		return err

@@ -65,7 +65,7 @@ func (h *AccountHandler) UpdatedAccount(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.accountService.UpdateAccount(id, &updatedAccount); err != nil {
+	if err := h.accountService.UpdatedAccount(id, &updatedAccount); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

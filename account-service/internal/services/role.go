@@ -24,7 +24,7 @@ func (s *RoleService) GetAllRoles() ([]models.Role, error) {
 
 func (s *RoleService) GetRoleByID(id string) (*models.Role, error) {
 	var role models.Role
-	if err := s.db.Preload("Accounts").Where("id = ?", id).First(&role).Error; err != nil {
+	if err := s.db.Preload("Accounts").Preload("DetailRoles").Where("id = ?", id).First(&role).Error; err != nil {
 		return nil, err
 	}
 	return &role, nil
