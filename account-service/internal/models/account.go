@@ -2,9 +2,11 @@ package models
 
 import (
 	"my-app/internal/util"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -37,5 +39,33 @@ func (a *Account) BeforeCreate(tx *gorm.DB) error {
 	if a.ID == uuid.Nil {
 		a.ID = uuid.New()
 	}
+
+	// hash
+	if a.Password != "" && !isBcryptHash(a.Password) {
+		hashed, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		a.Password = string(hashed)
+	}
 	return nil
+}
+
+func (a *Account) BeforeUpdate(tx *gorm.DB) error {
+	if a.Password != "" && !isBcryptHash(a.Password) {
+		hashed, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		a.Password = string(hashed)
+	}
+	return nil
+}
+
+func (a *Account) CheckPassword(plain string) error {
+	return bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(plain))
+}
+
+func isBcryptHash(s string) bool {
+	return strings.HasPrefix(s, "$2a$") || strings.HasPrefix(s, "$2b$") || strings.HasPrefix(s, "$2y$")
 }
