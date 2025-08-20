@@ -8,7 +8,7 @@ import (
 )
 
 type Review struct {
-	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID        uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	AccountId uuid.UUID      `gorm:"type:uuid;not null" validate:"required"`
 	RoomId    uuid.UUID      `gorm:"type:uuid;not null" validate:"required"`
 	Room      *Room          `gorm:"foreignKey:RoomId;references:ID"`

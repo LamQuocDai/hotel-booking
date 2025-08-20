@@ -16,7 +16,7 @@ func NewRoomTypeService(db *gorm.DB) *RoomTypeService {
 
 func (s *RoomTypeService) GetAllRoomTypes() ([]models.RoomType, error) {
 	var roomTypes []models.RoomType
-	return roomTypes, s.db.Preload("Rooms").Find(roomTypes).Error
+	return roomTypes, s.db.Preload("Rooms").Find(&roomTypes).Error
 }
 
 func (s *RoomTypeService) GetRoomTypeByID(id string) (*models.RoomType, error) {

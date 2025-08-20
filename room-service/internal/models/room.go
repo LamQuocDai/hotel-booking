@@ -16,7 +16,7 @@ var (
 )
 
 type Room struct {
-	ID           uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID           uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	Name         string         `gorm:"type:varchar(255);not null;unique" validate:"required"`
 	LocationId   uuid.UUID      `gorm:"type:uuid;not null" validate:"required"`
 	Location     *Location      `gorm:"foreignKey:LocationId;references:ID"`

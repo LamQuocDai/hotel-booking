@@ -8,7 +8,7 @@ import (
 )
 
 type Location struct {
-	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID          uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	Name        string         `gorm:"type:varchar(255);not null;unique" validate:"required"`
 	Address     string         `gorm:"type:varchar(255);not null;unique" validate:"required"`
 	Description string         `gorm:"type:varchar(255);not null"`

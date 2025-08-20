@@ -2,11 +2,13 @@ package database
 
 import (
 	"fmt"
+
 	"room-service/internal/config"
 	"room-service/internal/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 func InitDB(cfg *config.Config) (*gorm.DB, error) {
@@ -14,42 +16,44 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("DB_URL is not set")
 	}
 
-	// Step 1: Temporary connection for setup
-	tempDB, err := gorm.Open(postgres.Open(cfg.DBURL), &gorm.Config{})
+	// Setup: ensure schema and enum exist
+	setupDB, err := gorm.Open(postgres.Open(cfg.DBURL), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("connect db failed: %v", err)
+	}
+	if err := setupDB.Exec(`CREATE SCHEMA IF NOT EXISTS room;`).Error; err != nil {
+		return nil, fmt.Errorf("failed to create room schema: %v", err)
+	}
+	if err := setupDB.Exec(`DO $$ BEGIN
+        CREATE TYPE room.room_status AS ENUM ('occ','ooo','cl');
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;`).Error; err != nil {
+		return nil, fmt.Errorf("failed to create room_status enum: %v", err)
+	}
+
+	// Main connection: prefix all tables with room.
+	db, err := gorm.Open(postgres.Open(cfg.DBURL), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "room.",
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("connect db failed: %v", err)
 	}
 
-	// Step 2: Ensure room schema and extension exist
-	if err := tempDB.Exec("CREATE SCHEMA IF NOT EXISTS room").Error; err != nil {
-		return nil, fmt.Errorf("failed to create room schema: %v", err)
+	// search_path only room (no public)
+	if err := db.Exec(`SET search_path TO room;`).Error; err != nil {
+		return nil, fmt.Errorf("failed to set search_path: %v", err)
 	}
 
-	if err := tempDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
-		return nil, fmt.Errorf("failed to enable uuid extension: %v", err)
-	}
-
-	if err := tempDB.Exec(`DO $$ BEGIN 
-		CREATE TYPE room_status AS ENUM ('occ','ooo','cl'); 
-		EXCEPTION WHEN duplicate_object THEN NULL; 
-	END $$;`).Error; err != nil {
-		return nil, fmt.Errorf("failed to create room_status enum: %v", err)
-	}
-
-	// Step 3: Reconnect with search_path set in DSN
-	dsn := cfg.DBURL + "?search_path=room,public"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("connect db with search_path failed: %v", err)
-	}
-
-	// Step 4: Run migrations (in "room" schema automatically)
+	// Migrate (tables created as room.<table>)
 	if err := db.AutoMigrate(
 		&models.Room{},
 		&models.Location{},
 		&models.RoomImage{},
 		&models.RoomType{},
 		&models.Review{},
+		&models.RoomBooking{},
 	); err != nil {
 		return nil, fmt.Errorf("migration failed: %v", err)
 	}
