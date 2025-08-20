@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"my-app/internal/models"
 	"time"
 
@@ -25,7 +26,11 @@ type LoginResult struct {
 
 func (s *AuthService) Login(email, password string) (*LoginResult, error) {
 	var acc models.Account
-	if err := s.db.Where("email = !", email).First(&acc).Error; err != nil {
+
+	// Bound the query time (helps with remote DB)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := s.db.WithContext(ctx).Where("email = ?", email).First(&acc).Error; err != nil {
 		return nil, err
 	}
 	if err := acc.CheckPassword(password); err != nil {
@@ -34,12 +39,14 @@ func (s *AuthService) Login(email, password string) (*LoginResult, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
 		"sub":     acc.ID.String(),
+		"email":   acc.Email,
 		"role_id": acc.RoleId.String(),
 		"iat":     now.Unix(),
 		"exp":     now.Add(s.jwtTTL).Unix(),
 		"iss":     "account-service",
 	}
-	t := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	// Use HS256 with shared secret (matches your []byte secret)
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err := t.SignedString(s.jwtSecret)
 	if err != nil {
 		return nil, err

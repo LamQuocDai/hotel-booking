@@ -7,7 +7,7 @@ import (
 )
 
 func SetupDetailRoleRoutes(r *gin.Engine, h *handlers.DetailRoleHandler) {
-	detailRoleGroup := r.Group("/detailRoles")
+	detailRoleGroup := r.Group("/detail-roles")
 	{
 		detailRoleGroup.GET("", h.GetAllDetailRoles)
 		detailRoleGroup.GET("/:id", h.GetDetailRoleByID)

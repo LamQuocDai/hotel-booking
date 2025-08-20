@@ -19,11 +19,17 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	roleHandler := handlers.NewRoleHandler(roleService)
 	authService := services.NewAuthService(db, "dev-secret", 24*time.Hour)
 	authHandler := handlers.NewAuthHandler(authService)
+	permissionService := services.NewPermissionService(db)
+	permissionHandler := handlers.NewPermissionHandler(permissionService)
+	detailRoleService := services.NewDetailRoleService(db)
+	detailRoleHandler := handlers.NewDetailRoleHandler(detailRoleService)
 
 	// Register route groups
 	SetupAccountRoutes(r, accountHandler)
 	SetupRoleRoutes(r, roleHandler)
 	SetupAuthRoutes(r, authHandler)
+	SetupPermissionRoutes(r, permissionHandler)
+	SetupDetailRoleRoutes(r, detailRoleHandler)
 
 	return r
 }
