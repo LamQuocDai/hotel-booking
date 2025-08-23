@@ -54,6 +54,7 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		&models.RoomType{},
 		&models.Review{},
 		&models.RoomBooking{},
+		&models.Service{},
 	); err != nil {
 		return nil, fmt.Errorf("migration failed: %v", err)
 	}
