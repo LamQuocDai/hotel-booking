@@ -31,7 +31,7 @@ func (s *LocationService) CreateLocation(location *models.Location) error {
 func (s *LocationService) UpdatedLocation(id string, updatedLocation *models.Location) error {
 	var location models.Location
 	// Check ID existed
-	if err := s.db.Where("id = ?", id).First(&updatedLocation).Error; err != nil {
+	if err := s.db.Where("id = ?", id).First(&location).Error; err != nil {
 		return err
 	}
 	location.Name = updatedLocation.Name

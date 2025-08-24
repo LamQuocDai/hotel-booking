@@ -30,15 +30,13 @@ func (bs BookingStatus) IsValidStatus() error {
 }
 
 type Booking struct {
-	ID              uuid.UUID     `bson:"_id,omitempty" validate:"required,uuid"`
-	UserId          uuid.UUID     `bson:"user_id" validate:"required,uuid"`
-	CheckIn         time.Time     `bson:"check_in" validate:"requried"`
-	CheckOut        time.Time     `bson:"check_out" validate:"required,gtfield=CheckIn"`
-	Status          BookingStatus `bson:"status" validate:"required"`
-	ServiceBookings []uuid.UUID   `bson:"service_bookings" validate:"dive"`
-	RoomBookings    []uuid.UUID   `bson:"room_bookings" validate:"dive"`
-	CreatedAt       time.Time     `bson:"created_at" validate:"required"`
-	DeletedAt       *time.Time    `bson:"deleted_at,omitempty"`
+	ID           uuid.UUID     `bson:"_id,omitempty" validate:"required,uuid"`
+	UserId       uuid.UUID     `bson:"user_id" validate:"required,uuid"`
+	Status       BookingStatus `bson:"status" validate:"required"`
+	RoomBookings []uuid.UUID   `bson:"room_bookings" validate:"dive"`
+	TotalPrice   int           `bson:"total_price" validate:"required,min=0"`
+	CreatedAt    time.Time     `bson:"created_at" validate:"required"`
+	DeletedAt    *time.Time    `bson:"deleted_at,omitempty"`
 }
 
 func (b *Booking) IsValid() error {

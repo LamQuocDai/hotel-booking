@@ -1,8 +1,10 @@
 package services
 
 import (
+	proto "account-service/proto"
 	"booking-service/internal/models"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -14,108 +16,91 @@ import (
 type BookingService struct {
 	collection  *mongo.Collection
 	redisClient *redis.Client
+	proto.UnimplementedBookingServiceServer
 }
 
-func NewBookingService(db *mongo.Database, rdb *redis.Client) *BookingService {
-	return &BookingService{collection: db.Collection("bookings"), redisClient: rdb}
+func NewBookingService(collection *mongo.Collection, redisClient *redis.Client) *BookingService {
+	return &BookingService{collection: collection, redisClient: redisClient}
 }
 
-func (s *BookingService) acquireLock(ctx context.Context, resourceID string) (bool, error) {
-	lockKey := "lock:" + resourceID
-	return s.redisClient.SetNX(ctx, lockKey, "locked", 10*time.Second).Result()
-}
+func (s *BookingService) CreateBooking(ctx context.Context, req *proto.CreateBookingRequest) (*proto.CreateBookingResponse, error) {
+	booking := &models.Booking{
+		RoomBookings: make([]uuid.UUID, len(req.RoomIds)),
+		UserId:       uuid.MustParse(req.UserId),
+		Status:       models.BookingStatus(req.Status),
+	}
+	for i, id := range req.RoomIds {
+		booking.RoomBookings[i] = uuid.MustParse(id)
+	}
 
-func (s *BookingService) releaseLock(ctx context.Context, resourceID string) error {
-	lockKey := "lock:" + resourceID
-	return s.redisClient.Del(ctx, lockKey).Err()
-}
+	booking.BeforeCreate()
+	if err := booking.IsValid(); err != nil {
+		return &proto.CreateBookingResponse{Error: err.Error()}, nil
+	}
 
-func (s *BookingService) CreateBooking(booking *models.Booking) error {
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
+	// Acquire Redis locks for all rooms
+	var lockKeys []string
+	lockKeys = make([]string, len(booking.RoomBookings))
+	for i, id := range booking.RoomBookings {
+		lockKeys[i] = fmt.Sprintf("lock:room:%s", id.String())
+	}
 
-	// // Determine resource ID based on type
-	// var resourceID string
-	// if booking.Type == models.BookingTypeService {
-	// 	if booking.ServiceID == nil {
-	// 		return fmt.Errorf("service_id is required for service booking")
-	// 	}
-	// 	resourceID = booking.ServiceID.String()
-	// } else if booking.Type == models.BookingTypeRoom {
-	// 	if booking.RoomID == nil {
-	// 		return fmt.Errorf("room_id is required for room booking")
-	// 	}
-	// 	resourceID = booking.RoomID.String()
-	// } else {
-	// 	return fmt.Errorf("invalid booking type")
-	// }
-
-	// // Acquire a lock to prevent concurrent bookings
-	// acquired, err := s.acquireLock(ctx, resourceID)
-	// if err != nil || !acquired {
-	// 	return fmt.Errorf("failed to acquire lock: %v", err)
-	// }
-	// defer s.releaseLock(ctx, resourceID)
-
-	// // Check for overlapping bookings
-	// var existingBooking models.Booking
-	// err = s.collection.FindOne(ctx, bson.M{
-	// 	"type":      booking.Type,
-	// 	"service_id": booking.ServiceID,
-	// 	"room_id":    booking.RoomID,
-	// 	"start_time": bson.M{"$lte": booking.EndTime},
-	// 	"end_time":   bson.M{"$gte": booking.StartTime},
-	// 	"deleted_at": nil,
-	// }).Decode(&existingBooking)
-	// if err == nil {
-	// 	return fmt.Errorf("slot already booked")
-	// } else if err != mongo.ErrNoDocuments {
-	// 	return err
-	// }
-
-	// // Create the booking
-	// booking.BeforeCreate()
-	// if err := booking.IsValid(); err != nil {
-	// 	return err
-	// }
-	// _, err = s.collection.InsertOne(ctx, booking)
-
-	return nil
-}
-
-func (s *BookingService) GetBookingByID(id string) (*models.Booking, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return nil, err
+	locks := make(map[string]*redis.Lock)
+	for _, key := range lockKeys {
+		lock := s.redisClient.Lock().Key(key).Value(booking.ID.String()).Expiration(10 * time.Second)
+		if err := lock.Acquire(ctx); err != nil {
+			for _, l := range locks {
+				l.Release(ctx)
+			}
+			return &proto.CreateBookingResponse{Error: fmt.Sprintf("failed to acquire lock for %s: %v", key, err)}, nil
+		}
+		locks[key] = lock
 	}
-	var booking models.Booking
-	return &booking, s.collection.FindOne(ctx, bson.M{"_id": uuid, "deleted_at": nil}).Decode(&booking)
-}
+	defer func() {
+		for _, lock := range locks {
+			lock.Release(ctx)
+		}
+	}()
 
-func (s *BookingService) UpdateBookingStatus(id string, status models.BookingStatus) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	uuid, err := uuid.Parse(id)
+	// Start MongoDB transaction
+	session, err := s.collection.Database().Client().StartSession()
 	if err != nil {
-		return err
+		return &proto.CreateBookingResponse{Error: err.Error()}, nil
 	}
-	if err := status.IsValidStatus(); err != nil {
-		return err
-	}
-	_, err = s.collection.UpdateOne(ctx, bson.M{"_id": uuid, "deleted_at": nil}, bson.M{"$set": bson.M{"status": status}})
-	return err
-}
+	defer session.EndSession(ctx)
 
-func (s *BookingService) DeleteBooking(id string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	uuid, err := uuid.Parse(id)
+	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
+		if err := session.StartTransaction(); err != nil {
+			return err
+		}
+
+		// Check for overlapping bookings
+		filter := bson.M{
+			"room_bookings": bson.M{"$in": booking.RoomBookings},
+			"status":        bson.M{"$in": []models.BookingStatus{Holding, Pending}},
+			"deleted_at":    nil,
+		}
+		var existingBooking models.Booking
+		err := s.collection.FindOne(sc, filter).Decode(&existingBooking)
+		if err == nil {
+			return fmt.Errorf("rooms are already booked in Holding or Pending status")
+		} else if err != mongo.ErrNoDocuments {
+			return err
+		}
+
+		// Insert the booking
+		_, err = s.collection.InsertOne(sc, booking)
+		if err != nil {
+			return err
+		}
+		return session.CommitTransaction(sc)
+	})
 	if err != nil {
-		return err
+		session.AbortTransaction(ctx)
+		return &proto.CreateBookingResponse{Error: err.Error()}, nil
 	}
-	now := time.Now()
-	_, err = s.collection.UpdateOne(ctx, bson.M{"_id": uuid}, bson.M{"$set": bson.M{"deleted_at": &now}})
-	return err
+
+	return &proto.CreateBookingResponse{Message: "Booking created"}, nil
 }

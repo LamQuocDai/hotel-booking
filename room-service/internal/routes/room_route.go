@@ -13,6 +13,6 @@ func SetupRoomRoutes(r *gin.Engine, h *handlers.RoomHandler) {
 		RoomGroup.GET("/:id", h.GetRoomByID)
 		RoomGroup.POST("", h.CreateRoom)
 		RoomGroup.PUT("/:id", h.UpdatedRoom)
-		RoomGroup.DELETE("/id", h.DeleteRoom)
+		RoomGroup.DELETE("/:id", h.DeleteRoom)
 	}
 }

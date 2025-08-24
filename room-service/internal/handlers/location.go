@@ -66,7 +66,7 @@ func (h *LocationHandler) UpdatedLocation(c *gin.Context) {
 		return
 	}
 	if err := h.locationService.UpdatedLocation(id, &updatedLocation); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, updatedLocation)

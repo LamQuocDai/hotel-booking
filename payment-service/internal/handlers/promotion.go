@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"payment-service/internal/models"
 	"payment-service/internal/services"
+	"payment-service/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -12,6 +13,14 @@ import (
 type PromotionHandler struct {
 	promotionService *services.PromotionService
 	validate         *validator.Validate
+}
+
+type CreatePromotionReq struct {
+	Code        string `json:"code" binding:"required"`
+	Description string `json:"description"`
+	Discount    int    `json:"discount" binding:"required,min=0,max=100"`
+	StartDate   string `json:"startDate" binding:"required"` // e.g. 2025-07-07 or 7/7/2025
+	EndDate     string `json:"endDate" binding:"required"`
 }
 
 func NewPromotionHandler(promotionService *services.PromotionService) *PromotionHandler {
@@ -38,10 +47,27 @@ func (h *PromotionHandler) GetPromotionByID(c *gin.Context) {
 }
 
 func (h *PromotionHandler) CreatePromotion(c *gin.Context) {
-	var promotion models.Promotion
-	if err := c.ShouldBindJSON(&promotion); err != nil {
+	var req CreatePromotionReq
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
+	}
+	startT, err := utils.ParseFlexibleDate(req.StartDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid startDate format"})
+		return
+	}
+	endT, err := utils.ParseFlexibleDate(req.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid endDate format"})
+		return
+	}
+	promotion := models.Promotion{
+		Code:        req.Code,
+		Description: req.Description,
+		Discount:    req.Discount,
+		StartDay:    utils.DateToDayInt(startT),
+		EndDay:      utils.DateToDayInt(endT),
 	}
 	if err := h.promotionService.CreatePromotion(&promotion); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -52,10 +78,27 @@ func (h *PromotionHandler) CreatePromotion(c *gin.Context) {
 
 func (h *PromotionHandler) UpdatedPromotion(c *gin.Context) {
 	id := c.Param("id")
-	var updatedPromotion models.Promotion
-	if err := c.ShouldBindJSON(&updatedPromotion); err != nil {
+	var req CreatePromotionReq
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
+	}
+	startT, err := utils.ParseFlexibleDate(req.StartDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid startDate format"})
+		return
+	}
+	endT, err := utils.ParseFlexibleDate(req.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid endDate format"})
+		return
+	}
+	updatedPromotion := models.Promotion{
+		Code:        req.Code,
+		Description: req.Description,
+		Discount:    req.Discount,
+		StartDay:    utils.DateToDayInt(startT),
+		EndDay:      utils.DateToDayInt(endT),
 	}
 	if err := h.promotionService.UpdatedPromotion(id, &updatedPromotion); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

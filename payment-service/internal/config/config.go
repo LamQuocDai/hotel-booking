@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	DBURL  string
-	DBName string
+	DBURL  string `env:"DB_URL"`
+	DBName string `env:"DB_NAME"`
 }
 
 func LoadConfig() (*Config, error) {
